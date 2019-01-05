@@ -1,15 +1,33 @@
-#include <array>
 #include <iostream>
 
+size_t maxX(size_t maxD);
 size_t minX(size_t D);
 
 int main() {
-	std::array<size_t, 5> Ds = { 2, 3, 5, 6, 7 };
-
-	for (auto D : Ds)
-		std::cout << "(D = " << D << ") -> (X = " << minX(D) << ')' << std::endl;
+	size_t D;
+	std::cin >> D;
+	
+	std::cout << "Maximum X for D <= " << D << " is " << maxX(D) << std::endl;
 }
 
+size_t maxX(size_t maxD) {
+	size_t maxX = 0;
+	size_t root = 2, square = root * root;
+
+	for (size_t D = 2; D <= maxD; D++) {
+		if (D == square) {
+			root++;
+			square = root * root;
+			continue;
+		}
+
+		size_t X = minX(D);
+		if (X > maxX)
+			maxX = X;
+	}
+
+	return maxX;
+}
 size_t minX(size_t D) {
 	for (size_t x = 2;; x++) {
 		for (size_t y = 1;; y++) {
