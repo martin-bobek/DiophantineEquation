@@ -22,9 +22,35 @@ private:
 	
 	std::vector<uint64_t> qwords;
 };
+template <typename T>
+class Rational {
+public:
+	Rational(T num, T den) : num(num), den(den) {}
+	template <typename U> Rational &operator+=(U rhs);
+	Rational &Inv();
+	template <typename U> friend std::ostream &operator<<(std::ostream &os, const Rational<U> &value);
+	
+	size_t NumDigitSum() const { return num.DigitSum(); }
+private:
+	T num, den;
+};
 
 int main() {
 
+}
+
+template <typename T> template <typename U> Rational<T> &Rational<T>::operator+=(U rhs) {
+	T den_rhs = den;
+	den_rhs *= rhs;
+	num = den_rhs + num;
+	return *this;
+}
+template <typename T> Rational<T> &Rational<T>::Inv() {
+	std::swap(num, den);
+	return *this;
+}
+template <typename T> std::ostream &operator<<(std::ostream &os, const Rational<T> &value) {
+	return os << value.num << '/' << value.den;
 }
 
 size_t BigNum::operator/=(uint64_t rhs) {
