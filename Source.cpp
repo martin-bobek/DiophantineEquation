@@ -1,7 +1,39 @@
+#include <algorithm>
+#include <cmath>
 #include <intrin.h>
 #include <iostream>
 #include <vector>
 
+class QuadIrrat {
+public:
+	QuadIrrat(signed num, unsigned den) : num(num), den(den) {}
+	unsigned ExtractCoeff(unsigned rootFloor);
+	void Invert(unsigned radicand);
+	bool operator==(const QuadIrrat &rhs) const { return (num == rhs.num) && (den == rhs.den); }
+private:
+	signed num;
+	unsigned den;
+};
+class ContinuedRoot {
+public:
+	ContinuedRoot(unsigned maxRoot);
+	bool SetRadicand(unsigned radicand);
+	void ComputeContFrac();
+	unsigned FracPeriod() const { return (unsigned)extFrac.size() - blockStart; }
+private:
+	unsigned rootFloor() const;
+	bool isBlockEnd(const QuadIrrat &lastIrrat);
+
+	struct Level {
+		Level(QuadIrrat irrat) : irrat(irrat) {}
+		unsigned coeff = 0;
+		QuadIrrat irrat;
+	};
+
+	unsigned radicand, root, blockStart;
+	std::vector<Level> extFrac;
+	std::vector<unsigned> squares;
+};
 class BigNum {
 public:
 	BigNum() : qwords(1) {}
@@ -127,4 +159,56 @@ std::ostream &operator<<(std::ostream &os, BigNum num) {
 		os << digits[i];
 	
 	return os;
+}
+
+ContinuedRoot::ContinuedRoot(unsigned maxRadicand) : squares((unsigned)std::ceil(std::sqrt(maxRadicand))) {
+	for (unsigned i = 1; i <= squares.size(); i++)
+		squares[i - 1] = i * i;
+}
+bool ContinuedRoot::SetRadicand(unsigned radicand) {
+	this->radicand = radicand;
+	root = rootFloor();
+	if (squares[root - 1] == radicand)
+		return false;
+	extFrac.clear();
+	return true;
+}
+unsigned ContinuedRoot::rootFloor() const {
+	auto it = std::upper_bound(squares.begin(), squares.end(), radicand);
+	return (unsigned)(it - squares.begin());
+}
+void ContinuedRoot::ComputeContFrac() {
+	extFrac.emplace_back(QuadIrrat(0, 1));
+
+	while (true) {
+		Level &back = extFrac.back();
+		
+		back.coeff = back.irrat.ExtractCoeff(root);
+		back.irrat.Invert(radicand);
+
+		if (isBlockEnd(back.irrat))
+			break;
+
+		extFrac.emplace_back(back.irrat);
+	}
+}
+bool ContinuedRoot::isBlockEnd(const QuadIrrat &lastIrrat) {
+	for (unsigned i = 0; i < extFrac.size() - 1; i++) {
+		if (lastIrrat == extFrac[i].irrat) {
+			blockStart = i + 1;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+unsigned QuadIrrat::ExtractCoeff(unsigned rootFloor) {
+	unsigned coeff = (rootFloor + num) / den;
+	num -= coeff * den;
+	return coeff;
+}
+void QuadIrrat::Invert(unsigned radicand) {
+	den = (radicand - num * num) / den;
+	num = -num;
 }
