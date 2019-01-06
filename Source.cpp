@@ -6,32 +6,28 @@
 
 class QuadIrrat {
 public:
+	QuadIrrat() {}
 	QuadIrrat(signed num, unsigned den) : num(num), den(den) {}
 	unsigned ExtractCoeff(unsigned rootFloor);
 	void Invert(unsigned radicand);
 	bool operator==(const QuadIrrat &rhs) const { return (num == rhs.num) && (den == rhs.den); }
+	bool operator!=(const QuadIrrat &rhs) const { return !(*this == rhs); }
 private:
 	signed num;
 	unsigned den;
 };
 class ContinuedRoot {
 public:
-	ContinuedRoot(unsigned maxRoot);
+	ContinuedRoot(unsigned maxRadicand);
 	bool SetRadicand(unsigned radicand);
 	void ComputeContFrac();
-	unsigned FracPeriod() const { return (unsigned)extFrac.size() - blockStart; }
+	unsigned FracPeriod() const { return (unsigned)coeffs.size() - 1; }
 private:
 	unsigned rootFloor() const;
-	bool isBlockEnd(const QuadIrrat &lastIrrat);
 
-	struct Level {
-		Level(QuadIrrat irrat) : irrat(irrat) {}
-		unsigned coeff = 0;
-		QuadIrrat irrat;
-	};
-
-	unsigned radicand, root, blockStart;
-	std::vector<Level> extFrac;
+	unsigned radicand, root;
+	QuadIrrat blockStart;
+	std::vector<unsigned> coeffs;
 	std::vector<unsigned> squares;
 };
 class BigNum {
@@ -68,7 +64,11 @@ private:
 };
 
 int main() {
-
+	unsigned radicand = 13;
+	ContinuedRoot root(radicand);
+	root.SetRadicand(radicand);
+	root.ComputeContFrac();
+	std::cout << "Period of sqrt(" << radicand << ") is " << root.FracPeriod() << std::endl;
 }
 
 template <typename T> template <typename U> Rational<T> &Rational<T>::operator+=(U rhs) {
@@ -170,7 +170,7 @@ bool ContinuedRoot::SetRadicand(unsigned radicand) {
 	root = rootFloor();
 	if (squares[root - 1] == radicand)
 		return false;
-	extFrac.clear();
+	coeffs.clear();
 	return true;
 }
 unsigned ContinuedRoot::rootFloor() const {
@@ -178,29 +178,15 @@ unsigned ContinuedRoot::rootFloor() const {
 	return (unsigned)(it - squares.begin());
 }
 void ContinuedRoot::ComputeContFrac() {
-	extFrac.emplace_back(QuadIrrat(0, 1));
+	QuadIrrat irrat(0, 1);
+	
+	do {
+		coeffs.push_back(irrat.ExtractCoeff(root));
+		irrat.Invert(radicand);
 
-	while (true) {
-		Level &back = extFrac.back();
-		
-		back.coeff = back.irrat.ExtractCoeff(root);
-		back.irrat.Invert(radicand);
-
-		if (isBlockEnd(back.irrat))
-			break;
-
-		extFrac.emplace_back(back.irrat);
-	}
-}
-bool ContinuedRoot::isBlockEnd(const QuadIrrat &lastIrrat) {
-	for (unsigned i = 0; i < extFrac.size() - 1; i++) {
-		if (lastIrrat == extFrac[i].irrat) {
-			blockStart = i + 1;
-			return true;
-		}
-	}
-
-	return false;
+		if (coeffs.size() == 1)
+			blockStart = irrat;
+	} while ((coeffs.size() == 1) || (irrat != blockStart));
 }
 
 unsigned QuadIrrat::ExtractCoeff(unsigned rootFloor) {
