@@ -7,28 +7,29 @@
 class QuadIrrat {
 public:
 	QuadIrrat() {}
-	QuadIrrat(signed num, unsigned den) : num(num), den(den) {}
-	unsigned ExtractCoeff(unsigned rootFloor);
-	void Invert(unsigned radicand);
+	QuadIrrat(long long num, size_t den) : num(num), den(den) {}
+	size_t ExtractCoeff(size_t rootFloor);
+	void Invert(size_t radicand);
 	bool operator==(const QuadIrrat &rhs) const { return (num == rhs.num) && (den == rhs.den); }
 	bool operator!=(const QuadIrrat &rhs) const { return !(*this == rhs); }
 private:
-	signed num;
-	unsigned den;
+	long long num;
+	size_t den;
 };
 class ContinuedRoot {
 public:
-	ContinuedRoot(unsigned maxRadicand);
-	bool SetRadicand(unsigned radicand);
+	ContinuedRoot(size_t maxRadicand);
+	bool SetRadicand(size_t radicand);
 	void ComputeContFrac();
-	unsigned FracPeriod() const { return (unsigned)coeffs.size() - 1; }
+	size_t FracPeriod() const { return coeffs.size() - 1; }
+	size_t operator[](size_t index) const;
 private:
-	unsigned rootFloor() const;
+	size_t rootFloor() const;
 
-	unsigned radicand, root;
+	size_t radicand, root;
 	QuadIrrat blockStart;
-	std::vector<unsigned> coeffs;
-	std::vector<unsigned> squares;
+	std::vector<size_t> coeffs;
+	std::vector<size_t> squares;
 };
 class BigNum {
 public:
@@ -64,11 +65,14 @@ private:
 };
 
 int main() {
-	unsigned radicand = 13;
+	size_t radicand = 13;
 	ContinuedRoot root(radicand);
 	root.SetRadicand(radicand);
 	root.ComputeContFrac();
-	std::cout << "Period of sqrt(" << radicand << ") is " << root.FracPeriod() << std::endl;
+	std::cout << "Period of sqrt(" << radicand << ") is " << root.FracPeriod() << "\nCoefficients: ";
+	for (size_t i = 0; i < 20; i++)
+		std::cout << root[i] << ' ';
+	std::cout << "..." << std::endl;
 }
 
 template <typename T> template <typename U> Rational<T> &Rational<T>::operator+=(U rhs) {
@@ -161,11 +165,11 @@ std::ostream &operator<<(std::ostream &os, BigNum num) {
 	return os;
 }
 
-ContinuedRoot::ContinuedRoot(unsigned maxRadicand) : squares((unsigned)std::ceil(std::sqrt(maxRadicand))) {
-	for (unsigned i = 1; i <= squares.size(); i++)
+ContinuedRoot::ContinuedRoot(size_t maxRadicand) : squares(std::ceil(std::sqrt(maxRadicand))) {
+	for (size_t i = 1; i <= squares.size(); i++)
 		squares[i - 1] = i * i;
 }
-bool ContinuedRoot::SetRadicand(unsigned radicand) {
+bool ContinuedRoot::SetRadicand(size_t radicand) {
 	this->radicand = radicand;
 	root = rootFloor();
 	if (squares[root - 1] == radicand)
@@ -173,9 +177,9 @@ bool ContinuedRoot::SetRadicand(unsigned radicand) {
 	coeffs.clear();
 	return true;
 }
-unsigned ContinuedRoot::rootFloor() const {
+size_t ContinuedRoot::rootFloor() const {
 	auto it = std::upper_bound(squares.begin(), squares.end(), radicand);
-	return (unsigned)(it - squares.begin());
+	return it - squares.begin();
 }
 void ContinuedRoot::ComputeContFrac() {
 	QuadIrrat irrat(0, 1);
@@ -188,13 +192,18 @@ void ContinuedRoot::ComputeContFrac() {
 			blockStart = irrat;
 	} while ((coeffs.size() == 1) || (irrat != blockStart));
 }
+size_t ContinuedRoot::operator[](size_t index) const {
+	if (index < coeffs.size())
+		return coeffs[index];
+	return coeffs[((index - 1) % FracPeriod()) + 1];
+}
 
-unsigned QuadIrrat::ExtractCoeff(unsigned rootFloor) {
-	unsigned coeff = (rootFloor + num) / den;
+size_t QuadIrrat::ExtractCoeff(size_t rootFloor) {
+	size_t coeff = (rootFloor + num) / den;
 	num -= coeff * den;
 	return coeff;
 }
-void QuadIrrat::Invert(unsigned radicand) {
+void QuadIrrat::Invert(size_t radicand) {
 	den = (radicand - num * num) / den;
 	num = -num;
 }
