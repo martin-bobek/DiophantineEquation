@@ -12,19 +12,12 @@ private:
 	void expand();
 	
 	std::vector<size_t> squares = { 0 };
-};
+} Root;
 
 size_t maxX(size_t maxD);
 size_t minX(size_t D);
 
 int main() {
-	Sqrt root;
-
-	for (size_t i = 0; i < 100; i++) {
-		size_t val = root(i);
-		std::cout << i << " -> " << ((val == Sqrt::NoRoot) ? "[]" : std::to_string(val)) << std::endl;
-	}
-	
 	size_t D;
 	std::cin >> D;
 	
@@ -51,16 +44,11 @@ size_t maxX(size_t maxD) {
 	return maxX;
 }
 size_t minX(size_t D) {
-	for (size_t x = 2;; x++) {
-		for (size_t y = 1;; y++) {
-			size_t lhs = x * x;
-			size_t rhs = D * y * y + 1;
-			if (lhs == rhs) {
-				std::cout << '(' << x << ")^2 - " << D << "*(" << y << ")^2 = 1" << std::endl;
-				return x;
-			}
-			if (lhs < rhs)
-				break;
+	for (size_t y = 1;; y++) {
+		size_t x = Root(D * y * y + 1);
+		if (x != Sqrt::NoRoot) {
+			std::cout << '(' << x << ")^2 - " << D << "*(" << y << ")^2 = 1" << std::endl;
+			return x;
 		}
 	}
 }
