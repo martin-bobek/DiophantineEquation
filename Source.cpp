@@ -79,30 +79,30 @@ private:
 	Rational<T> frac;
 };
 
-BigNum MaxMinimalPellX(size_t maxD);
+template <typename T> T MaxMinimalPellX(size_t maxD);
 
 int main() {
 	size_t maxD;
 	std::cout << "Maximum D: ";
 	std::cin >> maxD;
 	
-	BigNum maxX = MaxMinimalPellX(maxD);
+	auto maxX = MaxMinimalPellX<BigNum>(maxD);
 	
 	std::cout << "Maximum minimal X solution for D up to " << maxD << " is " << maxX << std::endl;
 }
 
-BigNum MaxMinimalPellX(size_t maxD) {
+template <typename T> T MaxMinimalPellX(size_t maxD) {
 	ContinuedRoot coeffGen(maxD);
-	BigNum maxX = 0;
+	T maxX = 0;
 	
 	for (size_t D = 0; D <= maxD; D++) {
-		Convergent<BigNum> conv(D, coeffGen);
+		Convergent<T> conv(D, coeffGen);
 		
 		if (!conv.PellExists())
 			continue;
 		
 		conv.ComputeMinimalPell();
-		const BigNum &X = conv.Fraction().Numerator();
+		const T &X = conv.Fraction().Numerator();
 		if (X > maxX)
 			maxX = X;
 	}
