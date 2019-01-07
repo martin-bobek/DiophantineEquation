@@ -44,6 +44,7 @@ public:
 	uint64_t operator/=(uint64_t rhs);
 	bool operator==(uint64_t rhs) const { return (qwords.size() == 1) && (qwords[0] == rhs); }
 	bool operator!=(uint64_t rhs) const { return !(*this == rhs); }
+	bool operator>(const BigNum &rhs) const;
 	friend std::ostream &operator<<(std::ostream &os, BigNum num);
 private:
 	static constexpr size_t SIZE = 0;
@@ -78,30 +79,30 @@ private:
 	Rational<T> frac;
 };
 
-size_t MaxMinimalPellX(size_t maxD);
+BigNum MaxMinimalPellX(size_t maxD);
 
 int main() {
 	size_t maxD;
 	std::cout << "Maximum D: ";
 	std::cin >> maxD;
 	
-	size_t maxX = MaxMinimalPellX(maxD);
+	BigNum maxX = MaxMinimalPellX(maxD);
 	
 	std::cout << "Maximum minimal X solution for D up to " << maxD << " is " << maxX << std::endl;
 }
 
-size_t MaxMinimalPellX(size_t maxD) {
+BigNum MaxMinimalPellX(size_t maxD) {
 	ContinuedRoot coeffGen(maxD);
-	size_t maxX = 0;
+	BigNum maxX = 0;
 	
 	for (size_t D = 0; D <= maxD; D++) {
-		Convergent<size_t> conv(D, coeffGen);
+		Convergent<BigNum> conv(D, coeffGen);
 		
 		if (!conv.PellExists())
 			continue;
 		
 		conv.ComputeMinimalPell();
-		size_t X = conv.Fraction().Numerator();
+		const BigNum &X = conv.Fraction().Numerator();
 		if (X > maxX)
 			maxX = X;
 	}
@@ -204,6 +205,19 @@ BigNum &BigNum::operator*=(uint64_t rhs) {
 		qwords.push_back(high);
 	
 	return *this;
+}
+bool BigNum::operator>(const BigNum &rhs) const {
+	if (qwords.size() > rhs.qwords.size())
+		return true;
+	if (qwords.size() < rhs.qwords.size())
+		return false;
+	for (size_t i = qwords.size(); i-- > 0;) {
+		if (qwords[i] > rhs.qwords[i])
+			return true;
+		if (qwords[i] < rhs.qwords[i])
+			return false;
+	}
+	return false;
 }
 std::ostream &operator<<(std::ostream &os, BigNum num) {
 	std::vector<char> digits;
