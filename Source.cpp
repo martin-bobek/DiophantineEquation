@@ -204,21 +204,21 @@ std::ostream &operator<<(std::ostream &os, BigNum num) {
 	return os;
 }
 
-ContinuedRoot::ContinuedRoot(size_t maxRadicand) : squares(std::ceil(std::sqrt(maxRadicand))) {
-	for (size_t i = 1; i <= squares.size(); i++)
-		squares[i - 1] = i * i;
+ContinuedRoot::ContinuedRoot(size_t maxRadicand) : squares(std::ceil(std::sqrt(maxRadicand)) + 1) {
+	for (size_t i = 0; i < squares.size(); i++)
+		squares[i] = i * i;
 }
 bool ContinuedRoot::SetRadicand(size_t radicand) {
 	this->radicand = radicand;
 	root = rootFloor();
-	if (squares[root - 1] == radicand)
+	if (squares[root] == radicand)
 		return false;
 	coeffs.clear();
 	return true;
 }
 size_t ContinuedRoot::rootFloor() const {
 	auto it = std::upper_bound(squares.begin(), squares.end(), radicand);
-	return it - squares.begin();
+	return it - squares.begin() - 1;
 }
 void ContinuedRoot::ComputeContFrac() {
 	QuadIrrat irrat(0, 1);
