@@ -2,6 +2,7 @@
 #include <cmath>
 #include <intrin.h>
 #include <iostream>
+#include <tuple>
 #include <vector>
 
 class QuadIrrat {
@@ -59,10 +60,9 @@ public:
 	Rational(T num, T den) : num(num), den(den) {}
 	template <typename U> Rational &operator+=(U rhs);
 	Rational &Inv();
-	const T&Numerator() const { return num; }
+	const T &Numerator() const { return num; }
+	const T &Denominator() const { return den; }
 	template <typename U> friend std::ostream &operator<<(std::ostream &os, const Rational<U> &value);
-	
-	size_t NumDigitSum() const { return num.DigitSum(); }
 private:
 	T num, den;
 };
@@ -79,21 +79,23 @@ private:
 	Rational<T> frac;
 };
 
-template <typename T> T MaxMinimalPellX(size_t maxD);
+template <typename T> std::tuple<T, T, size_t> MaxMinimalPellXYD(size_t maxD);
 
 int main() {
 	size_t maxD;
 	std::cout << "Maximum D: ";
 	std::cin >> maxD;
 	
-	auto maxX = MaxMinimalPellX<BigNum>(maxD);
+	auto [X, Y, D] = MaxMinimalPellXYD<BigNum>(maxD);
 	
-	std::cout << "Maximum minimal X solution for D up to " << maxD << " is " << maxX << std::endl;
+	std::cout << "Maximum minimal X solution for D up to " << maxD << " is: \n";
+	std::cout << "\t(" << X << ")^2 - " << D << "*(" << Y << ")^2 = 1" << std::endl;
 }
 
-template <typename T> T MaxMinimalPellX(size_t maxD) {
+template <typename T> std::tuple<T, T, size_t> MaxMinimalPellXYD(size_t maxD) {
 	ContinuedRoot coeffGen(maxD);
-	T maxX = 0;
+	T maxX = 0, maxXY;
+	size_t maxXD;
 	
 	for (size_t D = 0; D <= maxD; D++) {
 		Convergent<T> conv(D, coeffGen);
@@ -102,12 +104,15 @@ template <typename T> T MaxMinimalPellX(size_t maxD) {
 			continue;
 		
 		conv.ComputeMinimalPell();
-		const T &X = conv.Fraction().Numerator();
-		if (X > maxX)
-			maxX = X;
+		const Rational<T> &frac = conv.Fraction();
+		if (frac.Numerator() > maxX) {
+			maxX = frac.Numerator();
+			maxXY = frac.Denominator();
+			maxXD = D;
+		}
 	}
 	
-	return maxX;
+	return { std::move(maxX), std::move(maxXY), maxXD };
 }
 
 template <typename T> Convergent<T>::Convergent(size_t radicand, ContinuedRoot &coeffCalculator) : coeffCalculator(&coeffCalculator) {
