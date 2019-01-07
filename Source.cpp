@@ -78,19 +78,35 @@ private:
 	Rational<T> frac;
 };
 
+size_t MaxMinimalPellX(size_t maxD);
+
 int main() {
-	size_t radicand;
-	std::cin >> radicand;
+	size_t maxD;
+	std::cout << "Maximum D: ";
+	std::cin >> maxD;
 	
-	ContinuedRoot coeffGen(radicand);
-	Convergent<size_t> conv(radicand, coeffGen);
-	if (!conv.PellExists()) {
-		std::cout << "No Solution!" << std::endl;
-		return 0;
+	size_t maxX = MaxMinimalPellX(maxD);
+	
+	std::cout << "Maximum minimal X solution for D up to " << maxD << " is " << maxX << std::endl;
+}
+
+size_t MaxMinimalPellX(size_t maxD) {
+	ContinuedRoot coeffGen(maxD);
+	size_t maxX = 0;
+	
+	for (size_t D = 0; D <= maxD; D++) {
+		Convergent<size_t> conv(D, coeffGen);
+		
+		if (!conv.PellExists())
+			continue;
+		
+		conv.ComputeMinimalPell();
+		size_t X = conv.Fraction().Numerator();
+		if (X > maxX)
+			maxX = X;
 	}
 	
-	conv.ComputeMinimalPell();
-	std::cout << conv.Fraction() << std::endl;
+	return maxX;
 }
 
 template <typename T> Convergent<T>::Convergent(size_t radicand, ContinuedRoot &coeffCalculator) : coeffCalculator(&coeffCalculator) {
