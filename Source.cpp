@@ -54,25 +54,64 @@ private:
 template <typename T>
 class Rational {
 public:
+	Rational() : num(0), den(1) {}
 	Rational(T num, T den) : num(num), den(den) {}
 	template <typename U> Rational &operator+=(U rhs);
 	Rational &Inv();
+	const T&Numerator() const { return num; }
 	template <typename U> friend std::ostream &operator<<(std::ostream &os, const Rational<U> &value);
 	
 	size_t NumDigitSum() const { return num.DigitSum(); }
 private:
 	T num, den;
 };
+template <typename T>
+class Convergent {
+public:
+	Convergent(size_t radicand, ContinuedRoot &coeffCalculator);
+	bool PellExists() const { return coeffCalculator; }
+	void ComputeMinimalPell();
+	const Rational<T> &Fraction() const { return frac; }
+private:
+	void computeConvergent(size_t n);
+	ContinuedRoot *coeffCalculator;
+	Rational<T> frac;
+};
 
 int main() {
-	size_t radicand = 13;
-	ContinuedRoot root(radicand);
-	root.SetRadicand(radicand);
-	root.ComputeContFrac();
-	std::cout << "Period of sqrt(" << radicand << ") is " << root.FracPeriod() << "\nCoefficients: ";
-	for (size_t i = 0; i < 20; i++)
-		std::cout << root[i] << ' ';
-	std::cout << "..." << std::endl;
+	size_t radicand;
+	std::cin >> radicand;
+	
+	ContinuedRoot coeffGen(radicand);
+	Convergent<size_t> conv(radicand, coeffGen);
+	if (!conv.PellExists()) {
+		std::cout << "No Solution!" << std::endl;
+		return 0;
+	}
+	
+	conv.ComputeMinimalPell();
+	std::cout << conv.Fraction() << std::endl;
+}
+
+template <typename T> Convergent<T>::Convergent(size_t radicand, ContinuedRoot &coeffCalculator) : coeffCalculator(&coeffCalculator) {
+	if (!this->coeffCalculator->SetRadicand(radicand))
+		this->coeffCalculator = nullptr;
+}
+template <typename T> void Convergent<T>::ComputeMinimalPell() {
+	coeffCalculator->ComputeContFrac();
+	
+	size_t evenPeriod = coeffCalculator->FracPeriod();
+	if (evenPeriod % 2 == 1)
+		evenPeriod *= 2;
+	
+	computeConvergent(evenPeriod - 1);
+}
+template <typename T> void Convergent<T>::computeConvergent(size_t n) {
+	ContinuedRoot &coeffs = *coeffCalculator;
+	
+	frac = Rational<T>(coeffs[n], 1);
+	while (n-- > 0)
+		frac.Inv() += coeffs[n];
 }
 
 template <typename T> template <typename U> Rational<T> &Rational<T>::operator+=(U rhs) {
